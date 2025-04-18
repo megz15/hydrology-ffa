@@ -3,7 +3,8 @@ library(lubridate)
 library(dplyr)
 library(extRemes)
 
-data <- read_excel("data/nizam_sagar_inflow.xlsx", sheet = "Sheet1")
+# Load Data
+data <- read_excel("../data/nizam_sagar_inflow.xlsx", sheet = "Sheet1")
 data$date <- as.Date(data$date, format="%d/%m/%Y")
 data$`Inflow (Cusecs)` <- as.numeric(data$`Inflow (Cusecs)`)
 data$year <- format(data$date, "%Y")
@@ -15,17 +16,16 @@ ams_data <- data %>%
   filter(ams > 0)
 ams_data <- ams_data[order(ams_data$ams, decreasing = TRUE),]
 
-# Weibull plotting positions
+# Weibull Plotting Positions
 n <- nrow(ams_data)
 ams_data$Rank <- 1:n
 ams_data$WeibullProb <- ams_data$Rank/(n+1)
 ams_data$ReturnPeriod <- 1/ams_data$WeibullProb
 
 # Log-Pearson Type III Distribution Fitting
-# Log-transform the AMS data
 ams_data$log_ams <- log10(ams_data$ams)
 
-# Calculate mean, standard deviation, and skewness of the log-transformed data
+# Calculating mean, stdev and skewness of the log-transformed data
 mean_log_ams <- mean(ams_data$log_ams)
 sd_log_ams <- sd(ams_data$log_ams)
 skewness_log_ams <- (sum((ams_data$log_ams - mean_log_ams)^3) * length(ams_data$log_ams)) / ((length(ams_data$log_ams) - 1) * (length(ams_data$log_ams) - 2) * sd_log_ams^3)
@@ -37,15 +37,16 @@ get_K <- function(T, skewness) {
   return(K)
 }
 
-# Calculate Log-Pearson Type III predicted discharges
+# Predicted Q Values for AMS using LP3
 ams_data$Q_pred_LP3 <- NA
 for (i in 1:nrow(ams_data)) {
   T <- ams_data$ReturnPeriod[i]
   K <- get_K(T, skewness_log_ams)
   log_Q_T <- mean_log_ams + K * sd_log_ams
-  ams_data$Q_pred_LP3[i] <- 10^log_Q_T # Convert back from log
+  ams_data$Q_pred_LP3[i] <- 10^log_Q_T
 }
 
+# Predicted Q Values for desired return periods
 return_periods <- c(2, 5, 10, 25, 50, 100, 200)
 predicted_discharges <-
   sapply(return_periods, function(T) {
@@ -54,6 +55,4 @@ predicted_discharges <-
     return(10 ^ log_Q_T)
   })
 
-results_lp3 <-
-  data.frame(Return_Period = return_periods,
-             Predicted_Discharge = predicted_discharges)
+results$LP3_Q_Pred <- predicted_discharges
