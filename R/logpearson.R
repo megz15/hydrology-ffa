@@ -3,14 +3,6 @@ library(lubridate)
 library(dplyr)
 library(extRemes)
 
-# Log transform data
-ams_data$log_ams <- log10(ams_data$ams)
-
-# Calculating mean, stdev and skewness of the log-transformed data
-mean_log_ams <- mean(ams_data$log_ams)
-sd_log_ams <- sd(ams_data$log_ams)
-skewness_log_ams <- (sum((ams_data$log_ams - mean_log_ams)^3) * length(ams_data$log_ams)) / ((length(ams_data$log_ams) - 1) * (length(ams_data$log_ams) - 2) * sd_log_ams^3)
-
 # Function to get K (frequency factor) using Wilson-Hilferty approximation (https://tonyladson.wordpress.com/2015/03/03/695/)
 get_K <- function(T, skewness) {
   z <- qnorm(1 - 1/T) # Standard normal deviate

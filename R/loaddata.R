@@ -17,5 +17,13 @@ ams_data$Rank <- 1:n
 ams_data$WeibullProb <- ams_data$Rank/(n+1)
 ams_data$ReturnPeriod <- 1/ams_data$WeibullProb
 
+# Log transform data
+ams_data$log_ams <- log10(ams_data$ams)
+
+# Calculating mean, stdev and skewness of the log-transformed data
+mean_log_ams <- mean(ams_data$log_ams)
+sd_log_ams <- sd(ams_data$log_ams)
+skewness_log_ams <- (sum((ams_data$log_ams - mean_log_ams)^3) * length(ams_data$log_ams)) / ((length(ams_data$log_ams) - 1) * (length(ams_data$log_ams) - 2) * sd_log_ams^3)
+
 # Results table
 results <- data.frame(T = c(2, 5, 10, 25, 50, 100, 200))

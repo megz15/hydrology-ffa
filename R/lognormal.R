@@ -3,39 +3,46 @@ library(lubridate)
 library(dplyr)
 library(extRemes)
 
-# Load Data
-data <- read_excel("../data/nizam_sagar_inflow.xlsx", sheet = "Sheet1")
-data$date <- as.Date(data$date, format="%d/%m/%Y")
-data$`Inflow (Cusecs)` <- as.numeric(data$`Inflow (Cusecs)`)
-data$year <- format(data$date, "%Y")
-
-# AMS Calc
-ams_data <- data %>%
-  group_by(year) %>%
-  summarise(ams = max(`Inflow (Cusecs)`, na.rm = TRUE))
-ams_data <- ams_data[order(ams_data$ams, decreasing = TRUE),]
-
-# Weibull Plotting Positions
-n <- nrow(ams_data)
-ams_data$Rank <- 1:n
-ams_data$WeibullProb <- ams_data$Rank/(n+1)
-ams_data$ReturnPeriod <- 1/ams_data$WeibullProb
-
-# Log-Normal
-ams_data$log_ams <- log10(ams_data$ams)
-mean_log_ams <- mean(ams_data$log_ams)
-sd_log_ams <- sd(ams_data$log_ams)
-
 # Manual method
-get_lognormal_quantile <- function(T, mean_log, sd_log) {
+get_lognormal_quantile <- function(T) {
   z <- qnorm(1 - 1/T) # standard normal deviate
-  log_Q_T <- mean_log + z * sd_log
+  log_Q_T <- mean_log_ams + z * sd_log_ams
   return(10^log_Q_T)
+}
+
+# MLE method
+library(fitdistrplus)
+
+# Fit log-normal distribution
+lognormal_fit <- fitdist(ams_data$ams, "lnorm")
+
+ams_data$Q_pred_LogNormal_MLE <- NA
+for (i in 1:nrow(ams_data)) {
+  T <- ams_data$ReturnPeriod[i]
+  ams_data$Q_pred_LogNormal_MLE[i] <- qlnorm(1 - ams_data$WeibullProb[i], 
+                                             meanlog = lognormal_fit$estimate["meanlog"], 
+                                             sdlog = lognormal_fit$estimate["sdlog"])
 }
 
 # Predicted Q Values for AMS using Log-Normal
 ams_data$Q_pred_LogNormal <- NA
 for (i in 1:nrow(ams_data)) {
   T <- ams_data$ReturnPeriod[i]
-  ams_data$Q_pred_LogNormal[i] <- get_lognormal_quantile(T, mean_log_ams, sd_log_ams)
+  ams_data$Q_pred_LogNormal[i] <- get_lognormal_quantile(T)
 }
+
+# Predicted Q Values for desired return periods
+predicted_discharges <- sapply(results$T, function(T) {
+  get_lognormal_quantile(T)
+})
+
+results$LogNormal_Q_Pred <- predicted_discharges
+
+# Predicted Q Values for desired return periods (MLE)
+predicted_discharges_mle <- sapply(results$T, function(T) {
+  prob <- 1 - 1/T
+  qlnorm(prob, 
+         meanlog = lognormal_fit$estimate["meanlog"], 
+         sdlog = lognormal_fit$estimate["sdlog"])
+})
+results$LogNormal_MLE_Q_Pred <- predicted_discharges_mle
