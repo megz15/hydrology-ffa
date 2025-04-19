@@ -1,3 +1,10 @@
+library(readxl)
+library(lubridate)
+library(dplyr)
+library(extRemes)
+library(fitdistrplus)
+library(MASS)
+
 # Load Data
 data <- read_excel("../data/nizam_sagar_inflow.xlsx", sheet = "Sheet1")
 data$date <- as.Date(data$date, format="%d/%m/%Y")
