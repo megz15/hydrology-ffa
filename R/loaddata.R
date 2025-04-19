@@ -4,6 +4,7 @@ library(dplyr)
 library(extRemes)
 library(fitdistrplus)
 library(MASS)
+library(evd)
 
 # Load Data
 data <- read_excel("../data/nizam_sagar_inflow.xlsx", sheet = "Sheet1")
