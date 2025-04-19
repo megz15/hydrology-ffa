@@ -18,13 +18,13 @@ ks_weibull_mle = ks.test(ams_data$ams, "pweibull",
                           scale = weibull_fit$estimate["scale"])
 
 gof_results$KS_Statistic = c(
-  NA, ks_gumbel_mle$statistic,
-  NA, ks_lognormal_mle$statistic,
-  NA, ks_gamma_mle$statistic, ks_weibull_mle$statistic
+  ks_gumbel_mle$statistic,
+  ks_lognormal_mle$statistic,
+  ks_gamma_mle$statistic, ks_weibull_mle$statistic
 )
 
 gof_results$KS_PValue = c(
-  NA, ks_gumbel_mle$p.value,
-  NA, ks_lognormal_mle$p.value,
-  NA, ks_gamma_mle$p.value, ks_weibull_mle$p.value
+  ks_gumbel_mle$p.value,
+  ks_lognormal_mle$p.value,
+  ks_gamma_mle$p.value, ks_weibull_mle$p.value
 )

@@ -37,5 +37,8 @@ skewness_log_ams <- (sum((ams_data$log_ams - mean_log_ams)^3) * length(ams_data$
 # Results table
 results <- data.frame(T = c(2, 5, 10, 25, 50, 100, 200))
 gof_results <- data.frame(
+  Distribution = c("Gumbel", "Log-Normal", "Gamma", "Weibull")
+)
+perf_metrics <- data.frame(
   Distribution = c("Gumbel (MME)", "Gumbel (MLE)", "Log-Normal (MME)", "Log-Normal (MLE)", "LP3", "Gamma (MLE)", "Weibull (MLE)")
 )

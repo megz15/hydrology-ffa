@@ -18,13 +18,13 @@ ad_weibull_mle = ad.test(ams_data$ams, "pweibull",
                          scale = weibull_fit$estimate["scale"])
 
 gof_results$AD_Statistic = c(
-  NA, ad_gumbel_mle$statistic,
-  NA, ad_lognormal_mle$statistic,
-  NA, ad_gamma_mle$statistic, ad_weibull_mle$statistic
+  ad_gumbel_mle$statistic,
+  ad_lognormal_mle$statistic,
+  ad_gamma_mle$statistic, ad_weibull_mle$statistic
 )
 
 gof_results$AD_PValue = c(
-  NA, ad_gumbel_mle$p.value,
-  NA, ad_lognormal_mle$p.value,
-  NA, ad_gamma_mle$p.value, ad_weibull_mle$p.value
+  ad_gumbel_mle$p.value,
+  ad_lognormal_mle$p.value,
+  ad_gamma_mle$p.value, ad_weibull_mle$p.value
 )

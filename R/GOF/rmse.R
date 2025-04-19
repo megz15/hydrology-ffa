@@ -12,4 +12,8 @@ rmse_lp3 = rmse(ams_data$ams, ams_data$LP3_Q_Pred)
 rmse_gamma_mle = rmse(ams_data$ams, ams_data$Gamma_Q_Pred_MLE)
 rmse_weibull_mle = rmse(ams_data$ams, ams_data$Weibull_Q_Pred_MLE)
 
-gof_results$RMSE = c(rmse_gumbel_manual, rmse_gumbel_mle, rmse_lognormal_manual, rmse_lognormal_mle, rmse_lp3, rmse_gamma_mle, rmse_weibull_mle)
+perf_metrics$RMSE = c(
+  rmse_gumbel_manual, rmse_gumbel_mle,
+  rmse_lognormal_manual, rmse_lognormal_mle,
+  rmse_lp3, rmse_gamma_mle, rmse_weibull_mle
+)
