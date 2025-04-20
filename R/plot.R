@@ -7,7 +7,7 @@ plot_data <- data.frame(
     results$Gumbel_Q_Pred_Manual,
     results$LP3_Q_Pred,
     results$LogNormal_Q_Pred_MLE,
-    results$Gumbel_Q_Pred_Manual,
+    results$LogNormal_Q_Pred_Manual,
     results$Gamma_Q_Pred_MLE,
     results$Weibull_Q_Pred_MLE
   ),

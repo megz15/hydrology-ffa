@@ -8,6 +8,7 @@ require(MASS)
 require(evd)
 require(goftest)
 require(DT)
+require(ggplot2)
 # library(rsconnect)
 
 ui <- fluidPage(
@@ -35,24 +36,41 @@ ui <- fluidPage(
     
     mainPanel(
       tabsetPanel(
-        tabPanel("Data Summary", 
+        tabPanel("Data Summary",
                  h4("Annual Maximum Series"),
                  DTOutput("amsTable")),
-        
-        tabPanel("Distribution Results", 
+        tabPanel("Distribution Results",
                  h4("Predicted Discharge for Standard Return Periods"),
                  DTOutput("resultsTable"),
                  hr(),
                  h4("Predicted Discharge for Return Periods Calculated from Data"),
                  DTOutput("weibullResultsTable")),
-        
-        tabPanel("Goodness-of-Fit Tests", 
+        tabPanel("Goodness-of-Fit Tests",
                  h4("Statistical Tests"),
                  DTOutput("gofTable")),
-        
-        tabPanel("Performance Metrics", 
+        tabPanel("Performance Metrics",
                  h4("Efficiency Metrics"),
-                 DTOutput("perfTable"))
+                 DTOutput("perfTable")),
+
+        tabPanel("Visualizations",
+                 h4("Comparison of Predicted Flood Discharges"),
+                 plotOutput("distributionComparisonPlot", height = "600px"),
+                 hr(),
+                 h4("Plot Settings"),
+                 checkboxGroupInput("distributionsToShow", "Select Distributions to Display:",
+                                    choices = c("Gumbel (MLE)" = "Gumbel_Q_Pred_MLE",
+                                                "Gumbel (MME)" = "Gumbel_Q_Pred_Manual",
+                                                "Log-Pearson III" = "LP3_Q_Pred", 
+                                                "Log-Normal (MLE)" = "LogNormal_Q_Pred_MLE",
+                                                "Log-Normal (MME)" = "LogNormal_Q_Pred_Manual",
+                                                "Gamma (MLE)" = "Gamma_Q_Pred_MLE",
+                                                "Weibull (MLE)" = "Weibull_Q_Pred_MLE"),
+                                    selected = c("Gumbel_Q_Pred_MLE", "LP3_Q_Pred", 
+                                                 "LogNormal_Q_Pred_MLE", "Gamma_Q_Pred_MLE", 
+                                                 "Weibull_Q_Pred_MLE")
+                 ),
+                 downloadButton("downloadPlot", "Download Plot")
+        )
       )
     )
   )
@@ -461,6 +479,125 @@ server <- function(input, output, session) {
     },
     content = function(file) {
       write.csv(rv$results, file, row.names = FALSE)
+    }
+  )
+  
+  # Distribution comparison plot
+  output$distributionComparisonPlot <- renderPlot({
+    req(rv$results, rv$analysisComplete)
+    req(input$distributionsToShow)
+    selected_dists <- input$distributionsToShow
+    
+    dist_labels <- c(
+      "Gumbel_Q_Pred_MLE" = "Gumbel (MLE)",
+      "Gumbel_Q_Pred_Manual" = "Gumbel (MME)",
+      "LP3_Q_Pred" = "Log-Pearson III",
+      "LogNormal_Q_Pred_MLE" = "Log-Normal (MLE)",
+      "LogNormal_Q_Pred_Manual" = "Log-Normal (MME)",
+      "Gamma_Q_Pred_MLE" = "Gamma",
+      "Weibull_Q_Pred_MLE" = "Weibull"
+    )
+    
+    # plotting with only selected distributions
+    plot_data <- data.frame(
+      ReturnPeriod = rep(rv$results$T, length(selected_dists)),
+      Discharge = numeric(length(rv$results$T) * length(selected_dists)),
+      Distribution = character(length(rv$results$T) * length(selected_dists))
+    )
+    
+    row_index <- 1
+    for (dist in selected_dists) {
+      for (i in 1:length(rv$results$T)) {
+        plot_data$ReturnPeriod[row_index] <- rv$results$T[i]
+        plot_data$Discharge[row_index] <- rv$results[[dist]][i]
+        plot_data$Distribution[row_index] <- dist_labels[dist]
+        row_index <- row_index + 1
+      }
+    }
+    
+    # conversion to factor to maintain order
+    plot_data$Distribution <- factor(plot_data$Distribution, levels = dist_labels[selected_dists])
+    
+    ggplot(plot_data, aes(x = ReturnPeriod, y = Discharge, 
+                          color = Distribution, group = Distribution)) +
+      geom_line(size = 1) +
+      geom_point(size = 3) +
+      scale_x_log10(breaks = c(2, 5, 10, 25, 50, 100, 200)) +
+      scale_y_continuous(labels = scales::comma) +
+      labs(
+        title = "Comparison of Predicted Flood Discharges for Different Distributions",
+        x = "Return Period (years)",
+        y = "Predicted Discharge (cusecs)"
+      ) +
+      theme_minimal() +
+      theme(
+        legend.position = "top",
+        panel.grid.minor = element_line(color = "gray90"),
+        panel.grid.major = element_line(color = "gray85"),
+        text = element_text(size = 12),
+        plot.title = element_text(size = 14, face = "bold")
+      )
+  })
+  
+  output$downloadPlot <- downloadHandler(
+    filename = function() {
+      paste("flood_frequency_plot_", Sys.Date(), ".png", sep = "")
+    },
+    content = function(file) {
+      req(rv$results, rv$analysisComplete)
+      req(input$distributionsToShow)
+      
+      selected_dists <- input$distributionsToShow
+      
+      dist_labels <- c(
+        "Gumbel_Q_Pred_MLE" = "Gumbel (MLE)",
+        "Gumbel_Q_Pred_Manual" = "Gumbel (MME)",
+        "LP3_Q_Pred" = "Log-Pearson III",
+        "LogNormal_Q_Pred_MLE" = "Log-Normal (MLE)",
+        "LogNormal_Q_Pred_Manual" = "Log-Normal (MME)",
+        "Gamma_Q_Pred_MLE" = "Gamma",
+        "Weibull_Q_Pred_MLE" = "Weibull"
+      )
+      
+      plot_data <- data.frame(
+        ReturnPeriod = rep(rv$results$T, length(selected_dists)),
+        Discharge = numeric(length(rv$results$T) * length(selected_dists)),
+        Distribution = character(length(rv$results$T) * length(selected_dists))
+      )
+      
+      row_index <- 1
+      for (dist in selected_dists) {
+        for (i in 1:length(rv$results$T)) {
+          plot_data$ReturnPeriod[row_index] <- rv$results$T[i]
+          plot_data$Discharge[row_index] <- rv$results[[dist]][i]
+          plot_data$Distribution[row_index] <- dist_labels[dist]
+          row_index <- row_index + 1
+        }
+      }
+      
+      plot_data$Distribution <- factor(plot_data$Distribution, levels = dist_labels[selected_dists])
+      
+      p <- ggplot(plot_data, aes(x = ReturnPeriod, y = Discharge, 
+                                 color = Distribution, group = Distribution)) +
+        geom_line(size = 1) +
+        geom_point(size = 3) +
+        scale_x_log10(breaks = c(2, 5, 10, 25, 50, 100, 200)) +
+        scale_y_continuous(labels = scales::comma) +
+        labs(
+          title = "Comparison of Predicted Flood Discharges for Different Distributions",
+          x = "Return Period (years)",
+          y = "Predicted Discharge (cusecs)"
+        ) +
+        theme_minimal() +
+        theme(
+          legend.position = "top",
+          panel.grid.minor = element_line(color = "gray90"),
+          panel.grid.major = element_line(color = "gray85"),
+          text = element_text(size = 12),
+          plot.title = element_text(size = 14, face = "bold")
+        )
+      
+      ggsave(file, plot = p, width = 10, height = 7, dpi = 300, bg = "white")
     }
   )
 }
