@@ -9,7 +9,7 @@ library(goftest)
 
 # Load Data
 data <- read_excel("../data/nizam_sagar_inflow.xlsx", sheet = "Sheet1")
-data$date <- as.Date(data$date, format="%d/%m/%Y")
+data$date <- as.Date(data$date)
 data$`Inflow (Cusecs)` <- as.numeric(data$`Inflow (Cusecs)`)
 data$year <- format(data$date, "%Y")
 

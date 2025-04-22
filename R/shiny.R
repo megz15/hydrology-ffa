@@ -95,7 +95,7 @@ server <- function(input, output, session) {
     
     # Load Data
     data <- read_excel(input$file$datapath, sheet = "Sheet1")
-    data$date <- as.Date(data$date, format="%d/%m/%Y")
+    data$date <- as.Date(data$date)
     data$`Inflow (Cusecs)` <- as.numeric(data$`Inflow (Cusecs)`)
     data$year <- format(data$date, "%Y")
     

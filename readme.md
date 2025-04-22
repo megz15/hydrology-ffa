@@ -4,6 +4,8 @@ This repo contains <b>R</b> code and data used for a <b>FFA project</b> as part 
 
 The project has been hosted as an interactive <b>Shiny app</b> which you may use: https://meghr.shinyapps.io/HydrologyFFA/
 
+Note that any discharge dataset can be used, as long as the headers match - "l No" "date" "Inflow (Cusecs)" - in the sheet "Sheet1". The code could be easily modified to account for variations in such structure.
+
 ## Contents
 
 The R directory includes the following files:
